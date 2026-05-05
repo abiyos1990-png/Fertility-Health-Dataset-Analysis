@@ -1,0 +1,91 @@
+SELECT count(*) As total_records,
+MIN(Female_Age) AS youngest,
+MAX(Female_Age) AS oldest,
+FROM 'fertility_health_dataset';
+
+SELECT count(*) As total_records,
+MIN(Male_Age) AS youngest,
+MAX(Male_Age) AS oldest,
+FROM 'fertility_health_dataset';
+
+SELECT "Pregnancy_Success", COUNT(*) AS Total_Pregnancy,
+AVG("Female_Age") AS Avg_Female_Age,
+AVG("Female_BMI") AS Avg_Female_BMI,
+STDDEV("Female_Age") AS Age_Standard_Dev
+FROM 'fertility_health_dataset'
+GROUP BY "Pregnancy_Success";
+
+SELECT CASE WHEN "Female_Age" < 30
+THEN 'Under 30'
+WHEN "Female_Age" BETWEEN 30 AND 35
+THEN '30-35'
+WHEN "Female_Age" BETWEEN 36 AND 40
+THEN '36-40'
+ELSE 'Over 40'
+END AS Female_Age_Group,
+COUNT(*) AS Total_Pregnancy,
+SUM(CASE WHEN "Pregnancy_Success" = 'Success' THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS
+Success_Rate_Percentage
+FROM 'fertility_health_dataset'
+GROUP BY Female_Age_Group
+ORDER BY MIN("Female_Age") ASC;
+
+SELECT CASE WHEN "Female_Age" < 35
+THEN 'Younger (<35)' ELSE 'Older(35+)' END AS Female_Age,
+CASE WHEN "Female_BMI" < 18.5 THEN 'Underweight'
+WHEN "Female_BMI" BETWEEN 18.5 AND 24.9 THEN 'Healthy'
+WHEN "Female_BMI" BETWEEN 24.9 AND 29.9 THEN 'Overweight'
+ELSE 'Obese'
+END AS Female_BMI,
+COUNT(*) AS 'Sample_Size',
+ROUND(AVG(CASE WHEN "Pregnancy_Success" = 'Success' THEN 1.0 ELSE 0.0 END) * 100, 1) AS Success_Rate_Pct
+FROM 'fertility_health_dataset'
+GROUP BY CASE WHEN "Female_Age" < 35
+THEN 'Younger (<35)' ELSE 'Older(35+)' END, 
+CASE WHEN "Female_BMI" < 18.5 THEN 'Underweight'
+WHEN "Female_BMI" BETWEEN 18.5 AND 24.9 THEN 'Healthy'
+WHEN "Female_BMI" BETWEEN 24.9 AND 29.9 THEN 'Overweight'
+ELSE 'Obese'
+END 
+ORDER BY "Female_Age" DESC, Success_Rate_Pct DESC;
+
+SELECT "Pregnancy_Success", COUNT(*) AS Total_Pregnancy,
+AVG("Female_Age") AS Avg_Female_Age,
+AVG("Female_BMI") AS Avg_Female_BMI,
+STDDEV("Female_Age") AS Age_Standard_Dev
+FROM 'fertility_health_dataset'
+GROUP BY "Pregnancy_Success";
+
+SELECT "Female_Age", ROUND(AVG(Female_BMI), 2) AS Average_BMI, COUNT(*) AS Total_Pregnancy,
+ROUND(SUM (CASE WHEN Pregnancy_Success = 'Success' THEN 1 ELSE 0 END) * 100.0 / COUNT (*), 2) AS "Pregnancy_Success"
+FROM 'fertility_health_dataset'
+GROUP BY "Female_Age"
+ORDER BY "Female_Age";
+
+SELECT "PCOS", "Pregnancy_Success",
+COUNT(*) AS How_Many,
+ROUND (COUNT(*) * 100.0 / (SELECT COUNT(*)
+FROM 'fertility_health_dataset' t2
+WHERE t2."PCOS" = t1."PCOS"), 2)
+AS Group_Percentage
+FROM 'fertility_health_dataset' t1
+GROUP BY "PCOS", "Pregnancy_Success"
+ORDER BY "PCOS";
+
+SELECT Pregnancy_Success,
+COUNT (*) AS Count,
+ROUND(AVG("Sperm_Motility_PCT"), 2) AS avg_motility,
+ROUND(STDDEV("Sperm_Motility_Pct"), 2) AS std_dev_motility
+FROM 'fertility_health_dataset'
+GROUP BY Pregnancy_Success;
+
+SELECT corr("Sperm_Motility_PCT",
+"Sperm_Count_M_per_ml") AS
+'Motility_count_correlation'
+FROM 'fertility_health_dataset';
+
+SELECT CAST("Male_Age" AS INTEGER) as 'Male-Age', CAST("Sperm_Motility_PCT" AS DECIMAL) as 'Sperm_Motiliy', CAST("Sperm_Count_M_per_mL" AS DECIMAL) as 'Sperm_Count', AVG(CASE WHEN "Pregnancy_Success" = 'Success' 
+THEN 1.0 ELSE 0.0 END) OVER (ORDER BY 'Sperm_Motility_Pct' ROWS BETWEEN 5 PRECEDING AND 5 FOLLOWING) AS Pregnancy_Success_indicator
+FROM 'fertility_health_dataset'
+ORDER BY Sperm_Motility_PCT;
+
